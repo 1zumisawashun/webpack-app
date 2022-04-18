@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= htmlWebpackPlugin.options.title %></title>
+  </head>
+  <body>
+    <div class="container">
+      <img id="loginImg" alt="" />
+      <h3>login for the webpack tutorial</h3>
+      <form>
+        <div class="form-field">
+          <!-- <label for="name">Your Name</label> -->
+          <input type="text" id="name" placeholder="name" required />
+        </div>
+        <div class="form-field">
+          <!-- <label for="email">Your Email</label> -->
+          <input type="email" id="email" placeholder="email" required />
+        </div>
+        <div class="form-field">
+          <!-- <label for="age">Your Age</label> -->
+          <input type="number" id="age" placeholder="age" required />
+        </div>
+        <button id="jokeBtn" class="btn">login</button>
+      </form>
+    </div>
+  </body>
+</html>
