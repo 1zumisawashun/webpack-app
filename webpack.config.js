@@ -28,11 +28,12 @@ module.exports = {
   // NOTE:evalを追加したオプションも存在する
   // NOTE:dist配下にjs.mapファイルが生成される
   devServer: {
+    // NOTE:webpack-dev-serverの公開フォルダ
     static: {
       directory: resolve(__dirname, "dist"),
     },
     port: 3000,
-    open: true,
+    open: true, // NOTE:自動でlocaljpst3000のページを開く
     hot: true,
     compress: true,
     historyApiFallback: true,
@@ -66,6 +67,9 @@ module.exports = {
   resolve: {
     extensions: [".ts", ".js"],
   },
+  // NOTE:モジュールとして扱いたいファイルの拡張子を指定する
+  // NOTE:例えば「import Foo from './foo'」という記述に対して"foo.ts"という名前のファイルをモジュールとして探す
+  // NOTE:デフォルトは['.js', '.json']
   // NOTE:resolveをしないとTSで記述したモジュールを使えない
   // NOTE:Reactの場合はここにjsxは追記される
   plugins: [

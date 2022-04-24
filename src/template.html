@@ -11,19 +11,46 @@
       <h3>login for the webpack tutorial</h3>
       <form>
         <div class="form-field">
-          <!-- <label for="name">Your Name</label> -->
           <input type="text" id="name" placeholder="name" required />
         </div>
         <div class="form-field">
-          <!-- <label for="email">Your Email</label> -->
           <input type="email" id="email" placeholder="email" required />
         </div>
         <div class="form-field">
-          <!-- <label for="age">Your Age</label> -->
           <input type="number" id="age" placeholder="age" required />
         </div>
         <button id="jokeBtn" class="btn">login</button>
       </form>
     </div>
+    <!-- 練習用に追加 -->
+    <template id="project-input">
+      <form>
+        <div class="form-control">
+          <label for="title">タイトル</label>
+          <input type="text" id="title" />
+        </div>
+        <div class="form-control">
+          <label for="description">説明</label>
+          <textarea id="description" rows="3"></textarea>
+        </div>
+        <div class="form-control">
+          <label for="manday">人日</label>
+          <input type="number" id="manday" step="1" min="0" max="10000" />
+        </div>
+        <button type="submit">プロジェクト追加</button>
+      </form>
+    </template>
+    <template id="single-project">
+      <li></li>
+    </template>
+    <template id="project-list">
+      <section class="projects">
+        <header>
+          <h2></h2>
+        </header>
+        <ul></ul>
+      </section>
+    </template>
+    <div id="app"></div>
   </body>
 </html>

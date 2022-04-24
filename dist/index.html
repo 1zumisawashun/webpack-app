@@ -4,23 +4,53 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Webpack App</title>
-  <script defer src="bundle4532da1ff296c4996f4b.js"></script></head>
+  <script defer src="bundle4b4a1d97c46eff0cae09.js"></script></head>
   <body>
     <div class="container">
-      <img id="bookImg" alt="" />
-      <h3>Don`t Laugh Challenge</h3>
-      <div id="joke" class="joke"></div>
-      <button id="jokeBtn" class="btn">Get Another Joke</button>
+      <img id="loginImg" alt="" />
+      <h3>login for the webpack tutorial</h3>
+      <form>
+        <div class="form-field">
+          <input type="text" id="name" placeholder="name" required />
+        </div>
+        <div class="form-field">
+          <input type="email" id="email" placeholder="email" required />
+        </div>
+        <div class="form-field">
+          <input type="number" id="age" placeholder="age" required />
+        </div>
+        <button id="jokeBtn" class="btn">login</button>
+      </form>
     </div>
-    <h1>Signup for the latest tutorials</h1>
-    <form>
-      <label for="name">Your name</label>
-      <input type="text" id="name" required />
-      <label for="email">Your email</label>
-      <input type="email" id="email" required />
-      <label for="age">Your age</label>
-      <input type="number" id="age" required />
-      <button>submit</button>
-    </form>
+    <!-- 練習用に追加 -->
+    <template id="project-input">
+      <form>
+        <div class="form-control">
+          <label for="title">タイトル</label>
+          <input type="text" id="title" />
+        </div>
+        <div class="form-control">
+          <label for="description">説明</label>
+          <textarea id="description" rows="3"></textarea>
+        </div>
+        <div class="form-control">
+          <label for="manday">人日</label>
+          <input type="number" id="manday" step="1" min="0" max="10000" />
+        </div>
+        <button type="submit">プロジェクト追加</button>
+      </form>
+    </template>
+    <template id="single-project">
+      <li></li>
+    </template>
+    <template id="project-list">
+      <section class="projects">
+        <header>
+          <h2></h2>
+        </header>
+        <ul></ul>
+      </section>
+    </template>
+    <div id="app"></div>
   </body>
 </html>
