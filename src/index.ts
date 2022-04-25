@@ -17,15 +17,41 @@ form.addEventListener("submit", (e) => {
   console.log(data, "data");
 });
 
+enum ProjectStatus {
+  Active,
+  Finished,
+}
+class Project {
+  constructor(
+    public id: string,
+    public title: string,
+    public description: string,
+    public manday: number,
+    public status: ProjectStatus
+  ) {}
+}
+type Listener<T> = (items: T[]) => void;
+class State<T> {
+  // 継承先のクラスでもアクセスすることができる
+  protected listeners: Listener<T>[] = []; //関数の配列
+
+  addListeners(listenerFn: Listener<T>) {
+    this.listeners.push(listenerFn);
+  }
+}
+
 // project state management
 // シングルトンとして切り出す理由として各オブジェクトをインスタンス化してもリストの追加に関しては使い回しで十分だからか？
 // 流石にtitleとかdecsに関しては毎回にインスタンスを生成する必要はあるが。
-class ProjectState {
-  private listeners: any[] = []; //関数の配列
-  private projects: any[] = [];
+class ProjectState extends State<Project> {
+  // renderProjectsの関数が入る
+
+  private projects: Project[] = [];
   // アプリケーション全体で必ず一つのオブジェクトしか存在しないことを保証する
   private static instance: ProjectState;
-  private constructor() {}
+  private constructor() {
+    super();
+  }
 
   // 新しいオブジェクトを利用することを保証できる
   static getInstance() {
@@ -36,17 +62,14 @@ class ProjectState {
     return this.instance;
   }
 
-  addListeners(listenerFn: Function) {
-    this.listeners.push(listenerFn);
-  }
-
   addProject(title: string, description: string, manday: number) {
-    const newProject = {
-      id: uuidv4(),
+    const newProject = new Project(
+      uuidv4(),
       title,
       description,
       manday,
-    };
+      ProjectStatus.Active
+    );
     this.projects.push(newProject);
     for (const listenerFn of this.listeners) {
       listenerFn(this.projects.slice());
@@ -122,82 +145,110 @@ function autobind(
   return adjDescriptor;
 }
 
-class ProjectList {
+// Component Class
+// Angulerとかでは見かけられるクラスっぽい
+// 直接インスタンス化されるべきではないので＞常に継承して使われるのでabstractクラスで登録する
+// abstractにすることでインスタンスかできなくなる
+abstract class Component<T extends HTMLElement, U extends HTMLElement> {
   templateElement: HTMLTemplateElement;
-  hostElement: HTMLDivElement;
-  element: HTMLElement;
-  assignedProjects: any[];
+  hostElement: T;
+  element: U;
 
-  constructor(private type: "active" | "finished") {
+  constructor(
+    templateId: string,
+    hostElementId: string,
+    insertAtStart: boolean,
+    newElementId: string //任意のパラメータは最後に置く必要がある
+  ) {
     this.templateElement = document.getElementById(
-      "project-list"
+      templateId
     )! as HTMLTemplateElement;
-    this.hostElement = document.getElementById("app")! as HTMLDivElement;
-    this.assignedProjects = [];
+    this.hostElement = document.getElementById(hostElementId)! as T;
 
-    const importedNode = document.importNode(
-      this.templateElement.content,
-      true
-    );
-    // テンプレートをHTMLにインポートする
-    this.element = importedNode.firstElementChild as HTMLElement;
-    // インポートした最初の子供の要素は
-    this.element.id = `${this.type}-projects`;
-
-    projectState.addListeners((projects: any[]) => {
-      this.assignedProjects = projects;
-      this.renderProjects();
-    });
-
-    this.attach();
-    this.renderContent();
-  }
-
-  private renderProjects() {
-    const listEl = document.getElementById(
-      `${this.type}-projects-list`
-    ) as HTMLUListElement;
-    for (const prjItem of this.assignedProjects) {
-      const listItem = document.createElement("li");
-      listItem.textContent = prjItem.title;
-      listEl.appendChild(listItem);
-    }
-  }
-
-  private attach() {
-    this.hostElement.insertAdjacentElement("beforeend", this.element);
-  }
-
-  private renderContent() {
-    const listId = `${this.type}-projects-list`;
-    this.element.querySelector("ul")!.id = listId;
-    this.element.querySelector("h2")!.textContent =
-      this.type === "active" ? "実行中プロジェクト" : "完了プロジェクト";
-  }
-}
-
-class ProjectInput {
-  templateElement: HTMLTemplateElement;
-  hostElement: HTMLDivElement;
-  element: HTMLFormElement;
-  titleInputElement: HTMLInputElement;
-  descriptionInputElement: HTMLInputElement;
-  mandayInputElement: HTMLInputElement;
-
-  // インスタンス化される時に即時フォームを表示する
-  constructor() {
-    this.templateElement = document.getElementById(
-      "project-input"
-    )! as HTMLTemplateElement;
-    this.hostElement = document.getElementById("app")! as HTMLDivElement;
     const importedNode = document.importNode(
       this.templateElement.content,
       true
     );
     // templateElement.contentでchildrenを取得することができる
     // 第二引数でディープクローンするか選択する（children以下の階層のNodeも取得するか）
-    this.element = importedNode.firstElementChild as HTMLFormElement;
-    this.element.id = "user-input";
+    this.element = importedNode.firstElementChild as U;
+    if (newElementId) {
+      this.element.id = newElementId;
+    }
+    this.attach(insertAtStart);
+  }
+
+  // abstractメソッドは具体的な実装はありません。代わりにこのクラスを継承したクラスで、このメソッドを実装して
+  // 利用可能にすることを強制します＞具体的な実装内容は継承先のクラスでおこなう
+  abstract configure(): void;
+  abstract renderContent(): void;
+  // ここからコンストラクタの中の要素は取得することができない
+  // 第一引数はどこに入れるか（インサートするか）
+  private attach(insertAtBeginning: boolean) {
+    this.hostElement.insertAdjacentElement(
+      insertAtBeginning ? "afterbegin" : "beforeend",
+      this.element
+    );
+  }
+}
+
+class ProjectList extends Component<HTMLDivElement, HTMLElement> {
+  assignedProjects: Project[];
+
+  constructor(private type: "active" | "finished") {
+    // superの呼び出しが完了するまではthisを使うことができないのでthis.type>typeにする
+    super("project-list", "app", false, `${type}-projects`);
+    this.assignedProjects = [];
+    // 依存関係の不具合が発生する可能性があるのでabstractには書かなかった
+    this.configure();
+    this.renderContent();
+  }
+
+  //abstractで実装しているから記述が必要＞何もすることがなければそのままにしておく
+  // publicメソッドはprivateメソッドの上に設置する
+  configure() {
+    projectState.addListeners((projects: Project[]) => {
+      const relevantProject = projects.filter((prj) => {
+        if (this.type === "active") {
+          return prj.status === ProjectStatus.Active;
+        }
+        return prj.status === ProjectStatus.Finished;
+      });
+      this.assignedProjects = relevantProject;
+      this.renderProjects();
+    });
+  }
+
+  renderContent() {
+    const listId = `${this.type}-projects-list`;
+    this.element.querySelector("ul")!.id = listId;
+    this.element.querySelector("h2")!.textContent =
+      this.type === "active" ? "実行中プロジェクト" : "完了プロジェクト";
+  }
+
+  private renderProjects() {
+    const listEl = document.getElementById(
+      `${this.type}-projects-list`
+    ) as HTMLUListElement;
+    // 初期化する
+    listEl.innerHTML = "";
+    for (const prjItem of this.assignedProjects) {
+      const listItem = document.createElement("li");
+      listItem.textContent = prjItem.title;
+      listEl.appendChild(listItem);
+    }
+  }
+}
+
+class ProjectInput extends Component<HTMLDivElement, HTMLFormElement> {
+  // NOTE:インスタンス変数
+  titleInputElement: HTMLInputElement;
+  descriptionInputElement: HTMLInputElement;
+  mandayInputElement: HTMLInputElement;
+
+  // インスタンス化される時に即時フォームを表示する
+  constructor() {
+    super("project-input", "app", true, "user-input");
 
     this.titleInputElement = this.element.querySelector(
       "#title"
@@ -210,9 +261,15 @@ class ProjectInput {
     ) as HTMLInputElement;
 
     this.configure();
-    this.attach();
     // privateメソッドなのでクラスの内側でしか呼び出すことができない
   }
+
+  configure() {
+    // this.element.addEventListener("submit", this.submitHandler.bind(this));
+    // デコレータを使って解決することもできる。以下デコレータを使った場合
+    this.element.addEventListener("submit", this.submitHandler);
+  }
+  renderContent() {}
 
   // タプル型で定義
   private gatherUserInput(): [string, string, number] | void {
@@ -267,18 +324,6 @@ class ProjectInput {
       projectState.addProject(title, desc, manday);
       this.clearInput();
     }
-  }
-
-  private configure() {
-    // this.element.addEventListener("submit", this.submitHandler.bind(this));
-    // デコレータを使って解決することもできる。以下デコレータを使った場合
-    this.element.addEventListener("submit", this.submitHandler);
-  }
-
-  private attach() {
-    this.hostElement.insertAdjacentElement("afterbegin", this.element);
-    // ここからコンストラクタの中の要素は取得することができない
-    // 第一引数はどこに入れるか（インサートするか）
   }
 }
 
