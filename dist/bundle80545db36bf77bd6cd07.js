@@ -531,31 +531,356 @@ module.exports = styleTagTransform;
 
 /***/ }),
 
-/***/ "./src/forms.ts":
-/*!**********************!*\
-  !*** ./src/forms.ts ***!
-  \**********************/
+/***/ "./src/components/base-component.ts":
+/*!******************************************!*\
+  !*** ./src/components/base-component.ts ***!
+  \******************************************/
 /***/ ((__unused_webpack_module, exports) => {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.formData = void 0;
-const formData = (form) => {
-    const inputs = form.querySelectorAll("input");
-    let values = {};
-    inputs.forEach((input) => {
-        values[input.id] = input.value;
-    });
-    return values;
-};
-exports.formData = formData;
+exports.Component = void 0;
+// Component Class
+// Angulerとかでは見かけられるクラスっぽい
+// 直接インスタンス化されるべきではないので＞常に継承して使われるのでabstractクラスで登録する
+// abstractにすることでインスタンスかできなくなる
+class Component {
+    constructor(templateId, hostElementId, insertAtStart, newElementId //任意のパラメータは最後に置く必要がある
+    ) {
+        this.templateElement = document.getElementById(templateId);
+        this.hostElement = document.getElementById(hostElementId);
+        const importedNode = document.importNode(this.templateElement.content, true);
+        // templateElement.contentでchildrenを取得することができる
+        // 第二引数でディープクローンするか選択する（children以下の階層のNodeも取得するか）
+        this.element = importedNode.firstElementChild;
+        if (newElementId) {
+            this.element.id = newElementId;
+        }
+        this.attach(insertAtStart);
+    }
+    // ここからコンストラクタの中の要素は取得することができない
+    // 第一引数はどこに入れるか（インサートするか）
+    attach(insertAtBeginning) {
+        this.hostElement.insertAdjacentElement(insertAtBeginning ? "afterbegin" : "beforeend", this.element);
+    }
+}
+exports.Component = Component;
 
 
 /***/ }),
 
-/***/ "./src/index.ts":
+/***/ "./src/components/project-input.ts":
+/*!*****************************************!*\
+  !*** ./src/components/project-input.ts ***!
+  \*****************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ProjectInput = void 0;
+const base_component_1 = __webpack_require__(/*! ./base-component */ "./src/components/base-component.ts");
+// import { autobind } from "../decorators/autobind";
+const autobind_1 = __webpack_require__(/*! ../decorators/autobind */ "./src/decorators/autobind.ts");
+// NOTE:名前の変更をすることもできる
+const project_state_1 = __webpack_require__(/*! ../state/project-state */ "./src/state/project-state.ts");
+// import { validate, Validatable } from "../utilities/validation";
+const Validation = __importStar(__webpack_require__(/*! ../utilities/validation */ "./src/utilities/validation.ts"));
+// NOTE:エイリアスを使ってオブジェクトのように扱うこともできる
+// NOTE:こうすることでグループ化することによってインポートされた要素であることを暗に示すことができる
+class ProjectInput extends base_component_1.Component {
+    // インスタンス化される時に即時フォームを表示する
+    constructor() {
+        super("project-input", "app", true, "user-input");
+        this.titleInputElement = this.element.querySelector("#title");
+        this.descriptionInputElement = this.element.querySelector("#description");
+        this.mandayInputElement = this.element.querySelector("#manday");
+        this.configure();
+        // privateメソッドなのでクラスの内側でしか呼び出すことができない
+    }
+    configure() {
+        // this.element.addEventListener("submit", this.submitHandler.bind(this));
+        // デコレータを使って解決することもできる。以下デコレータを使った場合
+        this.element.addEventListener("submit", this.submitHandler);
+    }
+    renderContent() { }
+    // タプル型で定義
+    gatherUserInput() {
+        const enteredTitle = this.titleInputElement.value;
+        const enteredDescription = this.descriptionInputElement.value;
+        const enteredManday = this.mandayInputElement.value;
+        const titleValidatable = {
+            value: enteredTitle,
+            required: true,
+        };
+        const descriptionValidatable = {
+            value: enteredDescription,
+            required: true,
+            minLength: 5,
+        };
+        const mandayValidatable = {
+            value: +enteredManday,
+            required: true,
+            min: 1,
+            max: 1000,
+        };
+        if (!Validation.validate(titleValidatable) ||
+            !Validation.validate(descriptionValidatable) ||
+            !Validation.validate(mandayValidatable)) {
+            alert("入力値が正しくありません。再度お試しください。");
+            return;
+        }
+        else {
+            return [enteredTitle, enteredDescription, +enteredManday];
+        }
+    }
+    clearInput() {
+        this.titleInputElement.value = "";
+        this.descriptionInputElement.value = "";
+        this.mandayInputElement.value = "";
+    }
+    submitHandler(event) {
+        event.preventDefault();
+        // 呼び出し元で.bind(this)することで呼び出し元と同じオブジェクトを参照する
+        // このままだと呼び出し元（configure）がthisになる
+        const userInput = this.gatherUserInput();
+        // ランタイム上ではタプルかどうか確認できないのでArrayかで判断する
+        if (Array.isArray(userInput)) {
+            const [title, desc, manday] = userInput;
+            // シングルトンクラスから読んでいる
+            project_state_1.projectState.addProject(title, desc, manday);
+            this.clearInput();
+        }
+    }
+}
+__decorate([
+    autobind_1.autobind
+], ProjectInput.prototype, "submitHandler", null);
+exports.ProjectInput = ProjectInput;
+
+
+/***/ }),
+
+/***/ "./src/components/project-item.ts":
+/*!****************************************!*\
+  !*** ./src/components/project-item.ts ***!
+  \****************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ProjectItem = void 0;
+const base_component_1 = __webpack_require__(/*! ./base-component */ "./src/components/base-component.ts");
+const autobind_1 = __webpack_require__(/*! ../decorators/autobind */ "./src/decorators/autobind.ts");
+//interfaceはオブジェクトの構造を型として定義するだけではなく、クラスに対する契約として使うことができる（implement）
+class ProjectItem extends base_component_1.Component {
+    constructor(hostId, project) {
+        super("single-project", hostId, false, project.id);
+        this.project = project;
+        // thisを使うとクラスから生成されたインスタンスを参照する。生のnameとかだとグローバルな参照になる
+        this.configure();
+        this.renderContent();
+    }
+    get manday() {
+        if (this.project.manday < 20) {
+            return this.project.manday.toString() + "人日";
+        }
+        else {
+            return (this.project.manday / 20).toString() + "人月";
+        }
+    }
+    dragStartHandler(event) {
+        event.dataTransfer.setData("text/plain", this.project.id);
+        event.dataTransfer.effectAllowed = "move";
+    }
+    dragEndHandler(_) {
+        console.log("drag終了");
+    }
+    configure() {
+        //イベントリスナーのthisはデフォルトではイベントの対象となったHTML要素を参照する
+        //bind(this)を追加することで参照先を変更することができる
+        this.element.addEventListener("dragstart", this.dragStartHandler);
+        this.element.addEventListener("dragend", this.dragEndHandler);
+    }
+    renderContent() {
+        this.element.querySelector("h2").textContent = this.project.title;
+        // computedに似ている！
+        // 何らかのデータを取得するときに何か変更を加えたものを取得することができる
+        this.element.querySelector("h3").textContent = this.manday;
+        this.element.querySelector("p").textContent = this.project.description;
+    }
+}
+__decorate([
+    autobind_1.autobind
+], ProjectItem.prototype, "dragStartHandler", null);
+exports.ProjectItem = ProjectItem;
+
+
+/***/ }),
+
+/***/ "./src/components/project-list.ts":
+/*!****************************************!*\
+  !*** ./src/components/project-list.ts ***!
+  \****************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ProjectList = void 0;
+const base_component_1 = __webpack_require__(/*! ./base-component */ "./src/components/base-component.ts");
+const autobind_1 = __webpack_require__(/*! ../decorators/autobind */ "./src/decorators/autobind.ts");
+const project_1 = __webpack_require__(/*! ../models/project */ "./src/models/project.ts");
+const project_state_1 = __webpack_require__(/*! ../state/project-state */ "./src/state/project-state.ts");
+const project_item_1 = __webpack_require__(/*! ./project-item */ "./src/components/project-item.ts");
+class ProjectList extends base_component_1.Component {
+    constructor(type) {
+        // superの呼び出しが完了するまではthisを使うことができないのでthis.type>typeにする
+        super("project-list", "app", false, `${type}-projects`);
+        this.type = type;
+        this.assignedProjects = [];
+        // 依存関係の不具合が発生する可能性があるのでabstractには書かなかった
+        this.configure();
+        this.renderContent();
+    }
+    dragOverHandler(event) {
+        if (event.dataTransfer && event.dataTransfer.types[0] === "text/plain") {
+            // event.preventDefault();を追加することでjavaScriptではこれによってDDだけが許可される
+            // これを指定しないとdropHandlerが呼び出されない
+            // 結論ドロップを許可するために設置する
+            event.preventDefault();
+            const listEl = this.element.querySelector("ul");
+            listEl.classList.add("droppable");
+        }
+    }
+    dropHandler(event) {
+        console.log(event);
+        // ブラウザでconsole.logのデータを見ている時には既にデータがクリアされているためItemやTypesを見ることはできない
+        // オブジェクトはreference型なので最新の状態が表示されるのが原因。下記で確認できる
+        console.log(event.dataTransfer.getData("text/plain"));
+        const prjId = event.dataTransfer.getData("text/plain");
+        project_state_1.projectState.moveProject(prjId, this.type === "active" ? project_1.ProjectStatus.Active : project_1.ProjectStatus.Finished);
+    }
+    dragLeaveHandler(_) {
+        const listEl = this.element.querySelector("ul");
+        listEl.classList.remove("droppable");
+    }
+    //abstractで実装しているから記述が必要＞何もすることがなければそのままにしておく
+    // publicメソッドはprivateメソッドの上に設置する
+    configure() {
+        this.element.addEventListener("dragover", this.dragOverHandler);
+        this.element.addEventListener("drop", this.dropHandler);
+        this.element.addEventListener("dragleave", this.dragLeaveHandler);
+        project_state_1.projectState.addListeners((projects) => {
+            const relevantProject = projects.filter((prj) => {
+                if (this.type === "active") {
+                    return prj.status === project_1.ProjectStatus.Active;
+                }
+                return prj.status === project_1.ProjectStatus.Finished;
+            });
+            this.assignedProjects = relevantProject;
+            this.renderProjects();
+        });
+    }
+    renderContent() {
+        const listId = `${this.type}-projects-list`;
+        this.element.querySelector("ul").id = listId;
+        this.element.querySelector("h2").textContent =
+            this.type === "active" ? "実行中プロジェクト" : "完了プロジェクト";
+    }
+    renderProjects() {
+        const listEl = document.getElementById(`${this.type}-projects-list`);
+        // 初期化する
+        listEl.innerHTML = "";
+        for (const prjItem of this.assignedProjects) {
+            new project_item_1.ProjectItem(listEl.id, prjItem);
+        }
+    }
+}
+__decorate([
+    autobind_1.autobind
+], ProjectList.prototype, "dragOverHandler", null);
+__decorate([
+    autobind_1.autobind
+], ProjectList.prototype, "dropHandler", null);
+__decorate([
+    autobind_1.autobind
+], ProjectList.prototype, "dragLeaveHandler", null);
+exports.ProjectList = ProjectList;
+
+
+/***/ }),
+
+/***/ "./src/decorators/autobind.ts":
+/*!************************************!*\
+  !*** ./src/decorators/autobind.ts ***!
+  \************************************/
+/***/ ((__unused_webpack_module, exports) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.autobind = void 0;
+// autobind decorator
+// "noUnusedParameters": trueをfalseにするか_をつける
+// 再利用のためにデコレータを使う？
+function autobind(_target, _methodName, descriptor) {
+    const originalMethod = descriptor.value;
+    const adjDescriptor = {
+        configurable: true,
+        get() {
+            const boundFn = originalMethod.bind(this);
+            return boundFn;
+        },
+    };
+    return adjDescriptor;
+}
+exports.autobind = autobind;
+
+
+/***/ }),
+
+/***/ "./src/forms.ts":
 /*!**********************!*\
-  !*** ./src/index.ts ***!
+  !*** ./src/forms.ts ***!
   \**********************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
@@ -564,54 +889,161 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const uuid_1 = __webpack_require__(/*! uuid */ "./node_modules/uuid/dist/esm-browser/index.js");
-__webpack_require__(/*! ./styles/main.scss */ "./src/styles/main.scss");
 const login_svg_1 = __importDefault(__webpack_require__(/*! ./assets/login.svg */ "./src/assets/login.svg"));
-const forms_1 = __webpack_require__(/*! ./forms */ "./src/forms.ts");
+const formData = (form) => {
+    const inputs = form.querySelectorAll("input");
+    let values = {};
+    inputs.forEach((input) => {
+        values[input.id] = input.value;
+    });
+    return values;
+};
 // NOTE:エクスクラメーション（!）でnullを回避する
 const loginImg = document.getElementById("loginImg");
 loginImg.src = login_svg_1.default;
-console.log((0, uuid_1.v4)());
-console.log("hello world");
 // NOTE:index.jsの出力なら問題ないがjsファイルは読み込むことができない
 const form = document.querySelector("form");
 form.addEventListener("submit", (e) => {
     e.preventDefault();
-    const data = (0, forms_1.formData)(form);
+    const data = formData(form);
     console.log(data, "data");
 });
-class ProjectInput {
-    // インスタンス化される時に即時フォームを表示する
-    constructor() {
-        this.templateElement = document.getElementById("project-input");
-        this.hostElement = document.getElementById("app");
-        const importedNode = document.importNode(this.templateElement.content, true);
-        // templateElement.contentでchildrenを取得することができる
-        // 第二引数でディープクローンするか選択する（children以下の階層のNodeも取得するか）
-        this.element = importedNode.firstElementChild;
-        this.element.id = "user-input";
-        this.titleInputElement = document.querySelector("#title");
-        this.descriptionInputElement = document.querySelector("#description");
-        this.mandayInputElement = document.querySelector("#manday");
-        this.configure();
-        this.attach();
-        // privateメソッドなのでクラスの内側でしか呼び出すことができない
-    }
-    submitHandler(event) {
-        event.preventDefault();
-        console.log(this.titleInputElement.value);
-        // 呼び出し元で.bind(this)することで呼び出し元と同じオブジェクトを参照する
-    }
-    configure() {
-        this.element.addEventListener("submit", this.submitHandler.bind(this));
-    }
-    attach() {
-        this.hostElement.insertAdjacentElement("afterbegin", this.element);
-        // ここからコンストラクタの中の要素は取得することができない
-        // 第一引数はどこに入れるか（インサートするか）
+
+
+/***/ }),
+
+/***/ "./src/models/project.ts":
+/*!*******************************!*\
+  !*** ./src/models/project.ts ***!
+  \*******************************/
+/***/ ((__unused_webpack_module, exports) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.Project = exports.ProjectStatus = void 0;
+var ProjectStatus;
+(function (ProjectStatus) {
+    ProjectStatus[ProjectStatus["Active"] = 0] = "Active";
+    ProjectStatus[ProjectStatus["Finished"] = 1] = "Finished";
+})(ProjectStatus = exports.ProjectStatus || (exports.ProjectStatus = {}));
+class Project {
+    constructor(id, title, description, manday, status) {
+        this.id = id;
+        this.title = title;
+        this.description = description;
+        this.manday = manday;
+        this.status = status;
     }
 }
-const prjInput = new ProjectInput();
+exports.Project = Project;
+
+
+/***/ }),
+
+/***/ "./src/state/project-state.ts":
+/*!************************************!*\
+  !*** ./src/state/project-state.ts ***!
+  \************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.projectState = exports.ProjectState = void 0;
+const uuid_1 = __webpack_require__(/*! uuid */ "./node_modules/uuid/dist/esm-browser/index.js");
+const project_1 = __webpack_require__(/*! ../models/project */ "./src/models/project.ts");
+class State {
+    constructor() {
+        // 継承先のクラスでもアクセスすることができる
+        this.listeners = []; //関数の配列
+    }
+    addListeners(listenerFn) {
+        this.listeners.push(listenerFn);
+    }
+}
+// project state management
+// シングルトンとして切り出す理由として各オブジェクトをインスタンス化してもリストの追加に関しては使い回しで十分だからか？
+// 流石にtitleとかdecsに関しては毎回にインスタンスを生成する必要はあるが。
+class ProjectState extends State {
+    constructor() {
+        super();
+        // renderProjectsの関数が入る
+        this.projects = [];
+    }
+    // 新しいオブジェクトを利用することを保証できる
+    static getInstance() {
+        if (this.instance) {
+            return this.instance;
+        }
+        this.instance = new ProjectState();
+        return this.instance;
+    }
+    addProject(title, description, manday) {
+        const newProject = new project_1.Project((0, uuid_1.v4)(), title, description, manday, project_1.ProjectStatus.Active);
+        this.projects.push(newProject);
+        this.updateListners();
+    }
+    moveProject(projectId, newStatus) {
+        const project = this.projects.find((prj) => prj.id === projectId);
+        if (project && project.status !== newStatus) {
+            //project.status !== newStatusを追加することで不要な再描画を防止できる（同じ要素でDDしても発火しない）
+            project.status = newStatus;
+            // リスナーは何か変更した時だけ呼び出す。リスナー関数が実行されると一覧が全て再描画される
+            this.updateListners();
+        }
+    }
+    updateListners() {
+        for (const listenerFn of this.listeners) {
+            listenerFn(this.projects.slice());
+            // sliceを使ってコピーを渡す。外部から追加できないようにするため
+        }
+    }
+}
+exports.ProjectState = ProjectState;
+// 状態管理を行うオブジェクトはアプリケーション全体で必ず一つだけ存在するようにしたい＞シングルトンパターンで保証する
+// private constructorでシングルトンのクラスであることを保証する＞「いつでも一つのインスタンスしか存在しない」こと
+// projectStateのグローバルなオブジェクトの定数を作成する＞getInstanceから取得している
+exports.projectState = ProjectState.getInstance();
+// NOTE:Q, 複数のファイルでインポートされているが、これは複数実行されるのか？
+// NOTE:A, 一度だけしか実行されない
+
+
+/***/ }),
+
+/***/ "./src/utilities/validation.ts":
+/*!*************************************!*\
+  !*** ./src/utilities/validation.ts ***!
+  \*************************************/
+/***/ ((__unused_webpack_module, exports) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.validate = void 0;
+function validate(validatableInput) {
+    let isValid = true;
+    if (validatableInput.required) {
+        isValid = isValid && validatableInput.value.toString().trim().length !== 0;
+    }
+    if (validatableInput.minLength != null &&
+        typeof validatableInput.value === "string") {
+        isValid =
+            isValid && validatableInput.value.length >= validatableInput.minLength;
+    }
+    if (validatableInput.maxLength != null &&
+        typeof validatableInput.value === "string") {
+        isValid =
+            isValid && validatableInput.value.length <= validatableInput.maxLength;
+    }
+    if (validatableInput.min != null &&
+        typeof validatableInput.value === "number") {
+        isValid = isValid && validatableInput.value >= validatableInput.min;
+    }
+    if (validatableInput.max != null &&
+        typeof validatableInput.value === "number") {
+        isValid = isValid && validatableInput.value <= validatableInput.max;
+    }
+    return isValid;
+}
+exports.validate = validate;
 
 
 /***/ }),
@@ -1569,12 +2001,25 @@ module.exports = __webpack_require__.p + "login.svg";
 /******/ 	})();
 /******/ 	
 /************************************************************************/
-/******/ 	
-/******/ 	// startup
-/******/ 	// Load entry module and return exports
-/******/ 	// This entry module is referenced by other modules so it can't be inlined
-/******/ 	var __webpack_exports__ = __webpack_require__("./src/index.ts");
-/******/ 	
+var __webpack_exports__ = {};
+// This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
+(() => {
+var exports = __webpack_exports__;
+/*!**********************!*\
+  !*** ./src/index.ts ***!
+  \**********************/
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+__webpack_require__(/*! ./styles/main.scss */ "./src/styles/main.scss");
+__webpack_require__(/*! ./forms */ "./src/forms.ts");
+const project_list_1 = __webpack_require__(/*! ./components/project-list */ "./src/components/project-list.ts");
+const project_input_1 = __webpack_require__(/*! ./components/project-input */ "./src/components/project-input.ts");
+new project_input_1.ProjectInput();
+new project_list_1.ProjectList("active");
+new project_list_1.ProjectList("finished");
+
+})();
+
 /******/ })()
 ;
-//# sourceMappingURL=bundle4b4a1d97c46eff0cae09.js.map
+//# sourceMappingURL=bundle80545db36bf77bd6cd07.js.map
