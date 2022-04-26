@@ -17,6 +17,17 @@ form.addEventListener("submit", (e) => {
   console.log(data, "data");
 });
 
+// DD
+interface Draggable {
+  dragStartHandler(event: DragEvent): void;
+  dragEndHandler(event: DragEvent): void;
+}
+interface DragTarget {
+  dragOverHandler(event: DragEvent): void;
+  dropHandler(event: DragEvent): void;
+  dragLeaveHandler(event: DragEvent): void;
+}
+
 enum ProjectStatus {
   Active,
   Finished,
@@ -71,6 +82,18 @@ class ProjectState extends State<Project> {
       ProjectStatus.Active
     );
     this.projects.push(newProject);
+    this.updateListners();
+  }
+  moveProject(projectId: string, newStatus: ProjectStatus) {
+    const project = this.projects.find((prj) => prj.id === projectId);
+    if (project && project.status !== newStatus) {
+      //project.status !== newStatusを追加することで不要な再描画を防止できる（同じ要素でDDしても発火しない）
+      project.status = newStatus;
+      // リスナーは何か変更した時だけ呼び出す。リスナー関数が実行されると一覧が全て再描画される
+      this.updateListners();
+    }
+  }
+  private updateListners() {
     for (const listenerFn of this.listeners) {
       listenerFn(this.projects.slice());
       // sliceを使ってコピーを渡す。外部から追加できないようにするため
@@ -192,7 +215,56 @@ abstract class Component<T extends HTMLElement, U extends HTMLElement> {
   }
 }
 
-class ProjectList extends Component<HTMLDivElement, HTMLElement> {
+//interfaceはオブジェクトの構造を型として定義するだけではなく、クラスに対する契約として使うことができる（implement）
+class ProjectItem
+  extends Component<HTMLUListElement, HTMLLIElement>
+  implements Draggable {
+  private project: Project;
+
+  get manday() {
+    if (this.project.manday < 20) {
+      return this.project.manday.toString() + "人日";
+    } else {
+      return (this.project.manday / 20).toString() + "人月";
+    }
+  }
+  constructor(hostId: string, project: Project) {
+    super("single-project", hostId, false, project.id);
+    this.project = project;
+    // thisを使うとクラスから生成されたインスタンスを参照する。生のnameとかだとグローバルな参照になる
+    this.configure();
+    this.renderContent();
+  }
+
+  @autobind
+  dragStartHandler(event: DragEvent) {
+    event.dataTransfer!.setData("text/plain", this.project.id);
+    event.dataTransfer!.effectAllowed = "move";
+  }
+
+  dragEndHandler(_: DragEvent) {
+    console.log("drag終了");
+  }
+
+  configure() {
+    //イベントリスナーのthisはデフォルトではイベントの対象となったHTML要素を参照する
+    //bind(this)を追加することで参照先を変更することができる
+    this.element.addEventListener("dragstart", this.dragStartHandler);
+    this.element.addEventListener("dragend", this.dragEndHandler);
+  }
+  renderContent() {
+    this.element.querySelector("h2")!.textContent = this.project.title;
+    // computedに似ている！
+    // 何らかのデータを取得するときに何か変更を加えたものを取得することができる
+    this.element.querySelector("h3")!.textContent = this.manday;
+    this.element.querySelector("p")!.textContent = this.project.description;
+  }
+}
+
+class ProjectList
+  extends Component<HTMLDivElement, HTMLElement>
+  implements DragTarget {
+  // implementを追加したことで特定のメソッドを追加することを強制される
   assignedProjects: Project[];
 
   constructor(private type: "active" | "finished") {
@@ -204,9 +276,44 @@ class ProjectList extends Component<HTMLDivElement, HTMLElement> {
     this.renderContent();
   }
 
+  @autobind
+  dragOverHandler(event: DragEvent) {
+    if (event.dataTransfer && event.dataTransfer.types[0] === "text/plain") {
+      // event.preventDefault();を追加することでjavaScriptではこれによってDDだけが許可される
+      // これを指定しないとdropHandlerが呼び出されない
+      // 結論ドロップを許可するために設置する
+      event.preventDefault();
+      const listEl = this.element.querySelector("ul")!;
+      listEl.classList.add("droppable");
+    }
+  }
+
+  @autobind
+  dropHandler(event: DragEvent) {
+    console.log(event);
+    // ブラウザでconsole.logのデータを見ている時には既にデータがクリアされているためItemやTypesを見ることはできない
+    // オブジェクトはreference型なので最新の状態が表示されるのが原因。下記で確認できる
+    console.log(event.dataTransfer!.getData("text/plain"));
+    const prjId = event.dataTransfer!.getData("text/plain");
+    projectState.moveProject(
+      prjId,
+      this.type === "active" ? ProjectStatus.Active : ProjectStatus.Finished
+    );
+  }
+
+  @autobind
+  dragLeaveHandler(_: DragEvent) {
+    const listEl = this.element.querySelector("ul")!;
+    listEl.classList.remove("droppable");
+  }
+
   //abstractで実装しているから記述が必要＞何もすることがなければそのままにしておく
   // publicメソッドはprivateメソッドの上に設置する
   configure() {
+    this.element.addEventListener("dragover", this.dragOverHandler);
+    this.element.addEventListener("drop", this.dropHandler);
+    this.element.addEventListener("dragleave", this.dragLeaveHandler);
+
     projectState.addListeners((projects: Project[]) => {
       const relevantProject = projects.filter((prj) => {
         if (this.type === "active") {
@@ -233,9 +340,7 @@ class ProjectList extends Component<HTMLDivElement, HTMLElement> {
     // 初期化する
     listEl.innerHTML = "";
     for (const prjItem of this.assignedProjects) {
-      const listItem = document.createElement("li");
-      listItem.textContent = prjItem.title;
-      listEl.appendChild(listItem);
+      new ProjectItem(listEl.id, prjItem);
     }
   }
 }
