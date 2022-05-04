@@ -63,7 +63,6 @@ export class ProjectList
     // mountのタイミングで下記を発火させコールバック関数をStateクラスのlistnersに入れる
     // 登録するだけ！＞関数の設置を行っている動的に変化させる、責務の切り分けのためにクラスを分けている
     projectState.addListeners((projects: Project[]) => {
-      console.log(projects, "========");
       const relevantProject = projects.filter((prj) => {
         if (this.type === "active") {
           return prj.status === ProjectStatus.Active;
@@ -71,7 +70,6 @@ export class ProjectList
         return prj.status === ProjectStatus.Finished;
       });
       this.assignedProjects = relevantProject;
-      console.log(this.assignedProjects, "this.assignedProjects");
       this.renderProjects();
     });
   }

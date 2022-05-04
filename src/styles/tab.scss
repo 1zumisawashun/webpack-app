@@ -39,7 +39,7 @@ input[type="radio"] {
   bottom: 0;
   width: calc(100% / 3);
   height: 3px;
-  background: #00b900;
+  background: #ff585d;
   transition: 0.2s;
 }
 #tab1:checked ~ .tab_btn .tab_underline {
@@ -57,7 +57,7 @@ input[type="radio"] {
 }
 #tab3:checked ~ .tab_btn .tab_underline {
   left: calc(100% / 1.5);
-  background: #ffb549;
+  background: #ff585d;
 }
 #tab3:checked ~ .tab_btn .tab_btn3 {
   color: #333;

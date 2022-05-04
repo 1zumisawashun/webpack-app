@@ -17,6 +17,8 @@ body {
   justify-content: center;
   margin: 0;
   padding: 20px;
+  // NOTE:スクロールバー出現のカクツキを直す
+  overflow-y: scroll;
 }
 
 form {
