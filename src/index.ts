@@ -1,6 +1,7 @@
 import "./styles/main.scss";
 import "./styles/tab.scss";
 import "./styles/project.scss";
+import "./styles/login.scss";
 
 import "./login";
 import { ProjectList } from "./components/project-list";

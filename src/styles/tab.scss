@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap");
+
 .wrapper {
   width: 100%;
   max-width: 750px;
@@ -37,7 +39,7 @@ input[type="radio"] {
   bottom: 0;
   width: calc(100% / 3);
   height: 3px;
-  background: #41b6e6;
+  background: #00b900;
   transition: 0.2s;
 }
 #tab1:checked ~ .tab_btn .tab_underline {
