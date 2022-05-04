@@ -212,3 +212,89 @@ button:active {
   border: 1px solid #ff0062;
   background: #f7f7f7;
 }
+
+.wrapper {
+  width: 100%;
+  max-width: 750px;
+  margin: 50px auto;
+}
+input[type="radio"] {
+  display: none;
+}
+.tab_btn {
+  list-style: none;
+  display: flex;
+  width: 100%;
+  position: relative;
+  padding: 0;
+  margin: 0;
+}
+.tab_btn li {
+  flex-basis: calc(100% / 3);
+  text-align: center;
+}
+.tab_btn label {
+  display: block;
+  line-height: 50px;
+  cursor: pointer;
+  box-sizing: border-box;
+  border-bottom: solid 3px #eee;
+  font-size: 15px;
+  color: #bbb;
+  transition: 0.2s;
+}
+.tab_btn label:hover {
+  color: #666;
+}
+.tab_underline {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: calc(100% / 3);
+  height: 3px;
+  background: #41b6e6;
+  transition: 0.2s;
+}
+#tab1:checked ~ .tab_btn .tab_underline {
+  left: 0;
+}
+#tab1:checked ~ .tab_btn .tab_btn1 {
+  color: #333;
+}
+#tab2:checked ~ .tab_btn .tab_underline {
+  left: calc(100% / 3);
+  background: #ff585d;
+}
+#tab2:checked ~ .tab_btn .tab_btn2 {
+  color: #333;
+}
+#tab3:checked ~ .tab_btn .tab_underline {
+  left: calc(100% / 1.5);
+  background: #ffb549;
+}
+#tab3:checked ~ .tab_btn .tab_btn3 {
+  color: #333;
+}
+section {
+  padding: 2em;
+  color: #666;
+}
+.tab_content2,
+.tab_content3 {
+  display: none;
+}
+#tab2:checked ~ .tab_content2 {
+  display: block;
+}
+#tab2:checked ~ .tab_content1,
+#tab2:checked ~ .tab_content3 {
+  display: none;
+}
+
+#tab3:checked ~ .tab_content3 {
+  display: block;
+}
+#tab3:checked ~ .tab_content1,
+#tab3:checked ~ .tab_content2 {
+  display: none;
+}
