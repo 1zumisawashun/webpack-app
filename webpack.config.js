@@ -1,4 +1,5 @@
 // NOTE:webpackは「read by node.js(learned by net ninjs)」な為CommonJSの記法になっている？
+// NOTE:webpackはNode.jsが使って実行される
 const { resolve } = require("path");
 // NOTE:絶対パス（absolute path）を使うためにpathモジュールを呼ぶ
 const HtmlWebpackPlugins = require("html-webpack-plugin");
@@ -15,14 +16,18 @@ module.exports = {
   output: {
     // publicPath: "dist",
     // NOTE:自動でコンパイルする。上記で設定すると HTML テンプレートでの JS の読み込みが一段ネストする（ dist/〇〇js ）
+    // このpublicPathはwebpack-dev-serverを使うときに必要なプロパティ
+    // webpack-dev-serverはメモリ上でしか再コンパイルを実行しないので
     path: resolve(__dirname, "dist"),
     filename: "[name][contenthash].js",
+    // 動的にユニークなファイル名にすることができる
     // NOTE:entry オブジェクト内のキーがブラケット（[name]）に入るので上記の場合 bundle.js に filename が置換される
     // NOTE:contenthashブラケットを追加してキャッシュ対応にする ＞ リロードしても表示し続ける
     clean: true,
     // NOTE:cleanオプションを追加することでビルドする度にdist配下のjsファイルが増えるのを消せる
     assetModuleFilename: "[name][ext]",
   },
+  // devtool: "inline-source-map",
   devtool: "source-map",
   // devtool: "eval-source-map",
   // NOTE:evalを追加したオプションも存在する

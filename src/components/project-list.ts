@@ -57,7 +57,13 @@ export class ProjectList
     this.element.addEventListener("drop", this.dropHandler);
     this.element.addEventListener("dragleave", this.dragLeaveHandler);
 
+    // 監視するだけ、初期レンダーはrenderContentでやっている、addProject or moveProjectで
+    // 発火する＞連動しているからか
+    // 味噌は「切り出した関数を別のクラスで使うこと」である
+    // mountのタイミングで下記を発火させコールバック関数をStateクラスのlistnersに入れる
+    // 登録するだけ！＞関数の設置を行っている動的に変化させる、責務の切り分けのためにクラスを分けている
     projectState.addListeners((projects: Project[]) => {
+      console.log(projects, "========");
       const relevantProject = projects.filter((prj) => {
         if (this.type === "active") {
           return prj.status === ProjectStatus.Active;
@@ -65,6 +71,7 @@ export class ProjectList
         return prj.status === ProjectStatus.Finished;
       });
       this.assignedProjects = relevantProject;
+      console.log(this.assignedProjects, "this.assignedProjects");
       this.renderProjects();
     });
   }

@@ -977,11 +977,13 @@ class ProjectState extends State {
         this.instance = new ProjectState();
         return this.instance;
     }
+    // CASE1:押下した時にリストに追加される・最終的にupdateListnersを発火させる
     addProject(title, description, manday) {
         const newProject = new project_1.Project((0, uuid_1.v4)(), title, description, manday, project_1.ProjectStatus.Active);
         this.projects.push(newProject);
         this.updateListners();
     }
+    // CASE2:DDした時にリストに追加される・最終的にupdateListnersを発火させる
     moveProject(projectId, newStatus) {
         const project = this.projects.find((prj) => prj.id === projectId);
         if (project && project.status !== newStatus) {
@@ -2022,4 +2024,4 @@ new project_list_1.ProjectList("finished");
 
 /******/ })()
 ;
-//# sourceMappingURL=bundle80545db36bf77bd6cd07.js.map
+//# sourceMappingURL=bundle14e9294df799c725222f.js.map
