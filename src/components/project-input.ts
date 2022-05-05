@@ -1,20 +1,15 @@
 import { Component } from "./base-component";
-// import { autobind } from "../decorators/autobind";
 import { autobind as Autobind } from "../decorators/autobind";
-// NOTE:名前の変更をすることもできる
 import { projectState } from "../state/project-state";
-// import { validate, Validatable } from "../utilities/validation";
 import * as Validation from "../utilities/validation";
 // NOTE:エイリアスを使ってオブジェクトのように扱うこともできる
 // NOTE:こうすることでグループ化することによってインポートされた要素であることを暗に示すことができる
 
 export class ProjectInput extends Component<HTMLDivElement, HTMLFormElement> {
-  // NOTE:インスタンス変数
-  titleInputElement: HTMLInputElement;
+  titleInputElement: HTMLInputElement; // NOTE:インスタンス変数
   descriptionInputElement: HTMLInputElement;
   mandayInputElement: HTMLInputElement;
 
-  // インスタンス化される時に即時フォームを表示する
   constructor() {
     super("project-input", "app", true, "user-input");
 
@@ -29,17 +24,16 @@ export class ProjectInput extends Component<HTMLDivElement, HTMLFormElement> {
     ) as HTMLInputElement;
 
     this.configure();
-    // privateメソッドなのでクラスの内側でしか呼び出すことができない
   }
 
   configure() {
-    // this.element.addEventListener("submit", this.submitHandler.bind(this));
-    // デコレータを使って解決することもできる。以下デコレータを使った場合
+    // NOTE:this.element.addEventListener("submit", this.submitHandler.bind(this));
+    // NOTE:デコレータを使って解決することもできる。以下デコレータを使った場合の例。
     this.element.addEventListener("submit", this.submitHandler);
   }
   renderContent() {}
 
-  // タプル型で定義
+  // NOTE:タプル型で定義すると下記になる
   private gatherUserInput(): [string, string, number] | void {
     const enteredTitle = this.titleInputElement.value;
     const enteredDescription = this.descriptionInputElement.value;
@@ -79,16 +73,15 @@ export class ProjectInput extends Component<HTMLDivElement, HTMLFormElement> {
     this.mandayInputElement.value = "";
   }
 
+  // NOTE:呼び出し元で.bind(this)することで呼び出し元と同じオブジェクトを参照する
+  // NOTE:このままだと呼び出し元（configure）がthisになる
   @Autobind
   private submitHandler(event: Event) {
     event.preventDefault();
-    // 呼び出し元で.bind(this)することで呼び出し元と同じオブジェクトを参照する
-    // このままだと呼び出し元（configure）がthisになる
     const userInput = this.gatherUserInput();
-    // ランタイム上ではタプルかどうか確認できないのでArrayかで判断する
+    // NOTE:ランタイム上ではタプルかどうか確認できないのでArrayかで判断する
     if (Array.isArray(userInput)) {
       const [title, desc, manday] = userInput;
-      // シングルトンクラスから読んでいる
       projectState.addProject(title, desc, manday);
       this.clearInput();
     }

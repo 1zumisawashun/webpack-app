@@ -1,4 +1,3 @@
-// validate
 export interface Validatable {
   value: string | number;
   required?: boolean;

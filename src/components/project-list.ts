@@ -7,14 +7,14 @@ import { ProjectItem } from "./project-item";
 export class ProjectList
   extends Component<HTMLDivElement, HTMLElement>
   implements DragTarget {
-  // implementを追加したことで特定のメソッドを追加することを強制される
+  // NOTE:implementを追加したことで特定のメソッドを追加することを強制される
+  // NOTE:interfaceはオブジェクトの構造を型として定義するだけではなく、クラスに対する契約として使うことができる（implement）
   assignedProjects: Project[];
 
   constructor(private type: "active" | "finished") {
-    // superの呼び出しが完了するまではthisを使うことができないのでthis.type>typeにする
+    // NOTE:superの呼び出しが完了するまではthisを使うことができないので「this.type」>「type]にする
     super("project-list", "app", false, `${type}-projects`);
     this.assignedProjects = [];
-    // 依存関係の不具合が発生する可能性があるのでabstractには書かなかった
     this.configure();
     this.renderContent();
   }
@@ -22,9 +22,9 @@ export class ProjectList
   @autobind
   dragOverHandler(event: DragEvent) {
     if (event.dataTransfer && event.dataTransfer.types[0] === "text/plain") {
-      // event.preventDefault();を追加することでjavaScriptではこれによってDDだけが許可される
-      // これを指定しないとdropHandlerが呼び出されない
-      // 結論ドロップを許可するために設置する
+      // NOTE:event.preventDefault();を追加することでjavaScriptではこれによってDDだけが許可される
+      // NOTE:これを指定しないとdropHandlerが呼び出されない
+      // NOTE:結論ドロップを許可するためにevent.preventDefault();を設置する
       event.preventDefault();
       const listEl = this.element.querySelector("ul")!;
       listEl.classList.add("droppable");
@@ -34,9 +34,9 @@ export class ProjectList
   @autobind
   dropHandler(event: DragEvent) {
     console.log(event);
-    // ブラウザでconsole.logのデータを見ている時には既にデータがクリアされているためItemやTypesを見ることはできない
-    // オブジェクトはreference型なので最新の状態が表示されるのが原因。下記で確認できる
     console.log(event.dataTransfer!.getData("text/plain"));
+    // NOTE:ブラウザでconsole.logのデータを見ている時には既にデータがクリアされているためeventのItemやTypesを見ることはできない
+    // NOTE:オブジェクトはreference型なので最新の状態が表示されるのが原因なのでevent.dataTransfer!.getData("text/plain")で確認できる
     const prjId = event.dataTransfer!.getData("text/plain");
     projectState.moveProject(
       prjId,
@@ -50,18 +50,15 @@ export class ProjectList
     listEl.classList.remove("droppable");
   }
 
-  //abstractで実装しているから記述が必要＞何もすることがなければそのままにしておく
-  // publicメソッドはprivateメソッドの上に設置する
+  // NOTE:abstractクラスを景勝しているので実装がなくても記述が必要＞何もすることがなければそのままにしておく
+  // NOTE:「publicメソッド」は「privateメソッド」の上に設置する
   configure() {
     this.element.addEventListener("dragover", this.dragOverHandler);
     this.element.addEventListener("drop", this.dropHandler);
     this.element.addEventListener("dragleave", this.dragLeaveHandler);
 
-    // 監視するだけ、初期レンダーはrenderContentでやっている、addProject or moveProjectで
-    // 発火する＞連動しているからか
-    // 味噌は「切り出した関数を別のクラスで使うこと」である
-    // mountのタイミングで下記を発火させコールバック関数をStateクラスのlistnersに入れる
-    // 登録するだけ！＞関数の設置を行っている動的に変化させる、責務の切り分けのためにクラスを分けている
+    // NOTE:責務上別のクラスに切り出している関数を持ってきてaddEventListnerと同じように「登録」している
+    // NOTE:詳細はproject-state.jsに記載されている
     projectState.addListeners((projects: Project[]) => {
       const relevantProject = projects.filter((prj) => {
         if (this.type === "active") {
@@ -85,8 +82,7 @@ export class ProjectList
     const listEl = document.getElementById(
       `${this.type}-projects-list`
     ) as HTMLUListElement;
-    // 初期化する
-    listEl.innerHTML = "";
+    listEl.innerHTML = ""; // NOTE:初期化する
     for (const prjItem of this.assignedProjects) {
       new ProjectItem(listEl.id, prjItem);
     }

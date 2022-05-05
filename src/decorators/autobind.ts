@@ -1,6 +1,4 @@
-// autobind decorator
-// "noUnusedParameters": trueをfalseにするか_をつける
-// 再利用のためにデコレータを使う？
+// NOTE:"noUnusedParameters": trueをfalseにするか_をつける
 export function autobind(
   _target: any,
   _methodName: string,
