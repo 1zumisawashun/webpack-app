@@ -1,4 +1,4 @@
-import loginIcon from "../assets/login.svg";
+import loginIcon from "../assets/icon/login.svg";
 
 export class Login {
   form: HTMLFormElement;
